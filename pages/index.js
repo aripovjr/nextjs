@@ -1,3 +1,4 @@
+import { MongoClient } from "mongodb";
 import MeetupList from "../components/meetups/MeetupList";
 
 const DUMMY_MEETUPS = [
@@ -32,14 +33,29 @@ function HomePage(props) {
 //getStaticProps runs during "next build" so it means every time we build it
 
 export async function getStaticProps() {
+  const client = await MongoClient.connect(
+    "mongodb+srv://aripovjr:rNbrwR0l8PpGAqly@cluster0.mugkpxq.mongodb.net/meetups?retryWrites=true&w=majority"
+  );
+  const db = client.db();
+
+  const meetupsCollection = db.collection("meetups");
+
+  const meetups = await meetupsCollection.find().toArray();
+
+  client.close();
   return {
     props: {
-      meetups: DUMMY_MEETUPS,
+      meetups: meetups.map((meetup) => ({
+        title: meetup.title,
+        address: meetup.address,
+        image: meetup.image,
+        id: meetup._id.toString(),
+      })),
     },
     //so in case we want our page be rendered every some parrticular time
     //we need to assign time in seconds to "revalidate" key 10 means 10 seconds
     //if we want ro re-generate our page every hour, we assign 3600
-    revalidate: 10,
+    revalidate: 1,
   };
 }
 
